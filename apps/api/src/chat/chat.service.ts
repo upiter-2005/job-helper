@@ -14,18 +14,20 @@ export class ChatService {
 
 
 //here will be store messages
-    return this.llm.complete({ messages: []})
+    return this.llm.complete({ messages: []});
   }
 
-
   streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
-    const {sessionId, prompt} = params
-    const buffer = '';
-    //return UUID 
-    //create history
-    //collect buffer
+    const {sessionId, prompt} = params;
+    const history = new Map();
 
-    if(sessionId){ console.log(sessionId, prompt) }
+
+    if(!sessionId){
+      let uuid = self.crypto.randomUUID();
+      history.set(uuid, {role: "user", content: prompt});
+      //createConversation()
+      //createMessageInDb()
+     }
 
     return this.llm.stream( {messages: []}, onText, signal);
   }

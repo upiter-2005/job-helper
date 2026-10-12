@@ -11,6 +11,7 @@ export type CompleteParams ={
     system?: string; 
     messages: Message[];
 }
+
 export interface LlmPortType {
     complete(params: CompleteParams): Promise<string>;
     stream(
