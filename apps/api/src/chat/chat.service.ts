@@ -19,17 +19,19 @@ export class ChatService {
 
   streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
     const {sessionId, prompt} = params;
-    const history = new Map();
-
+    const history = new Map<string, llmPort.Message[]>();
+    let buffer = '';
 
     if(!sessionId){
       let uuid = self.crypto.randomUUID();
-      history.set(uuid, {role: "user", content: prompt});
+      history.set(uuid, [{role: "user", content: prompt}]);
       //createConversation()
       //createMessageInDb()
+     }else{
+
      }
 
-    return this.llm.stream( {messages: []}, onText, signal);
+    return this.llm.stream( {messages: []}, (text) => { buffer += text; onText(text);} , signal);
   }
 
 }
