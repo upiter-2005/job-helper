@@ -1,0 +1,1 @@
+export type StreamParams = {prompt: string, sessionId?: string} 

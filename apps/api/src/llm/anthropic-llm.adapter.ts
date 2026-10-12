@@ -27,9 +27,35 @@ export class AnthropicLlmAdapter implements LlmPortType {
 
         const result = message.content.find(el => el.type === "text") 
 
-        console.log(message);
         if(!result) throw new Error(`Error without text, stop_reason=${message.stop_reason}`);
 
         return result.text ;
+    }
+
+
+    async stream (params: CompleteParams, onText: (text: string) => void, signal?: AbortSignal) {
+        const {messages, system} = params;
+
+        const streamResponse = this.client.messages.stream({
+            model: "claude-haiku-5-5",
+            max_tokens: 300,
+            system: system || SYSTEM ,
+            messages
+        });
+
+        const onAbort = () => streamResponse.abort();
+        if(signal?.aborted) onAbort();
+        signal?.addEventListener('abort', onAbort, {once: true});
+
+        try {
+            for await (const chunk of streamResponse) {
+                if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+                    onText(chunk.delta.text);
+                }
+            }
+        } finally {
+            signal?.removeEventListener('abort', onAbort);
+        }
+        
     }
 }

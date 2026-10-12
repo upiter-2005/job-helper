@@ -1,4 +1,5 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Post, Res } from "@nestjs/common";
+import type {Response} from 'express';
 import { ChatService } from "./chat.service.js";
 import { SendMessageDto } from "./chat.dto.js";
 
@@ -6,12 +7,43 @@ import { SendMessageDto } from "./chat.dto.js";
 export class ChatController {
     constructor(private readonly chatService: ChatService){};
 
-    @Post()
+    @Post('complete')
     async sendMessage(@Body() payload: SendMessageDto): Promise<string>{
 
         const {sessionId, prompt} = payload;
         const response = await this.chatService.sendMessage(prompt, sessionId);
 
         return response;
+    }
+
+    @Post('')
+    async stream(@Body() params: SendMessageDto, @Res() res: Response) {
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders();
+
+        const abort = new AbortController();
+        
+        res.on('close', () => {
+            if (!res.writableEnded) abort.abort();
+        });
+
+        try {
+            await this.chatService.streamAnswer(
+                params,
+                (text) => res.write(`data: ${JSON.stringify({ text })}\n\n`),
+                abort.signal,
+            );
+            res.write(`event: done\ndata: {}\n\n`);
+        } catch (err) {
+            if (!abort.signal.aborted) {
+                res.write(`event: error\ndata: ${JSON.stringify({ message: 'Generation failed' })}\n\n`);
+            }
+        } finally {
+            res.end();
+        }
     }
 }
