@@ -38,7 +38,7 @@ export class AnthropicLlmAdapter implements LlmPortType {
 
         const streamResponse = this.client.messages.stream({
             model: "claude-haiku-5-5",
-            max_tokens: 300,
+            max_tokens: 1300,
             system: system || SYSTEM ,
             messages
         });

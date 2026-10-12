@@ -1,37 +1,34 @@
 import { Inject, Injectable } from "@nestjs/common";
 import * as llmPort from "../llm/llm.port.js";
 import { StreamParams } from "./chat.types.js";
+import { HistoryService } from "../history/history.service.js";
+import { randomUUID } from "node:crypto";
 
 @Injectable()
 export class ChatService {
-  constructor(@Inject(llmPort.LLM) private readonly llm: llmPort.LlmPortType) {}
+  constructor(
+    @Inject(llmPort.LLM) private readonly llm: llmPort.LlmPortType,
+    private historyService:HistoryService
+  ) {}
 
   async sendMessage (prompt: string, sessionId?: string) {
 
-    //return UUID 
-    //create history
     if(sessionId){ console.log(sessionId, prompt) }
 
-
-//here will be store messages
     return this.llm.complete({ messages: []});
   }
 
-  streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
+  async streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
     const {sessionId, prompt} = params;
-    const history = new Map<string, llmPort.Message[]>();
+    const id = sessionId || randomUUID();
+    const history = this.historyService.getHistory(id);
+    const messages: llmPort.Message[] = [...history, {role: 'user', content: prompt}]
     let buffer = '';
 
-    if(!sessionId){
-      let uuid = self.crypto.randomUUID();
-      history.set(uuid, [{role: "user", content: prompt}]);
-      //createConversation()
-      //createMessageInDb()
-     }else{
-
-     }
-
-    return this.llm.stream( {messages: []}, (text) => { buffer += text; onText(text);} , signal);
+    await this.llm.stream( {messages}, (text) => { buffer += text; onText(text);} , signal);
+    this.historyService.setHistory( id, prompt, buffer );
+    
+    return id;
   }
 
 }

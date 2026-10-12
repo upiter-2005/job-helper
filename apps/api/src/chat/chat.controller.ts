@@ -32,12 +32,12 @@ export class ChatController {
         });
 
         try {
-            await this.chatService.streamAnswer(
+            const id = await this.chatService.streamAnswer(
                 params,
                 (text) => res.write(`data: ${JSON.stringify({ text })}\n\n`),
                 abort.signal,
             );
-            res.write(`event: done\ndata: {}\n\n`);
+            res.write(`event: done\ndata:  ${JSON.stringify({ sessionId: id })}\n\n`);
         } catch (err) {
             if (!abort.signal.aborted) {
                 res.write(`event: error\ndata: ${JSON.stringify({ message: 'Generation failed' })}\n\n`);
