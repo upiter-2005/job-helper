@@ -9,7 +9,7 @@ export class ChatController {
     async sendMessage(@Body() payload: any): Promise<string>{
 
         const {prompt} = payload;
-        const response = await this.chatService.sendMessage({system: '', prompt})
+        const response = await this.chatService.sendMessage({system: '', messages: prompt})
 
         return response;
     }

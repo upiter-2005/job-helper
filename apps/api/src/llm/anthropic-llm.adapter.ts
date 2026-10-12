@@ -15,13 +15,13 @@ export class AnthropicLlmAdapter implements LlmPortType {
     private readonly client;
 
     async complete(params: CompleteParams){
-        const {prompt} = params;
+        const {messages} = params;
 
         const message = await this.client.messages.create({
             model: "claude-haiku-5-5",
             max_tokens: 300,
             system: "use short explanation responses",
-            messages: [{ role: "user", content: prompt}]
+            messages
         });
 
         const result = message.content.find(el => el.type === "text") 

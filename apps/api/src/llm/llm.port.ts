@@ -9,7 +9,7 @@ export type Message = {
 
 export type CompleteParams ={
     system?: string; 
-    prompt: Message[];
+    messages: Message[];
 }
 export interface LlmPortType {
     complete(params: CompleteParams): Promise<string>;
