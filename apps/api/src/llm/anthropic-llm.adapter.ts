@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CompleteParams, LlmPortType } from "./llm.port.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { ConfigService } from "@nestjs/config";
-import { SYSTEM } from "../consts/llm.consts.js";
+import { MAX_INPUT_TOKENS, MODEL, SYSTEM } from "../consts/llm.consts.js";
 
 @Injectable()
 export class AnthropicLlmAdapter implements LlmPortType {
@@ -21,8 +21,8 @@ export class AnthropicLlmAdapter implements LlmPortType {
         const {messages, system} = params;
 
         const message = await this.client.messages.create({
-            model: "claude-haiku-5-5",
-            max_tokens: 300,
+            model: MODEL,
+            max_tokens: MAX_INPUT_TOKENS,
             system: system || SYSTEM ,
             messages
         });
@@ -39,8 +39,8 @@ export class AnthropicLlmAdapter implements LlmPortType {
         const {messages, system} = params;
 
         const streamResponse = this.client.messages.stream({
-            model: "claude-haiku-5-5",
-            max_tokens: 1300,
+            model: MODEL,
+            max_tokens: MAX_INPUT_TOKENS,
             system: system || SYSTEM ,
             messages
         });
@@ -49,7 +49,6 @@ export class AnthropicLlmAdapter implements LlmPortType {
         if(signal?.aborted) onAbort();
         signal?.addEventListener('abort', onAbort, {once: true});
 
-        
         try {
             for await (const chunk of streamResponse) {
                 if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {

@@ -3,6 +3,7 @@ import * as llmPort from "../llm/llm.port.js";
 import { StreamParams } from "./chat.types.js";
 import { HistoryService } from "../history/history.service.js";
 import { randomUUID } from "node:crypto";
+import { ROLES } from "../consts/llm.consts.js";
 
 @Injectable()
 export class ChatService {
@@ -15,7 +16,7 @@ export class ChatService {
     const {sessionId, prompt} = params;
     const id = sessionId || randomUUID();
     const history = this.historyService.getHistory(id);
-    const messages: llmPort.Message[] = [...history, {role: 'user', content: prompt}]
+    const messages: llmPort.Message[] = [...history, {role: ROLES.USER, content: prompt}]
     let buffer = '';
 
     const {inputTokens, outputTokens} = await this.llm.stream( {messages}, (text) => { buffer += text; onText(text);} , signal);

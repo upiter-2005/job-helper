@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import * as llmPort from "../llm/llm.port.js";
+import { ROLES } from "../consts/llm.consts.js";
 
 @Injectable()
 export class HistoryService {
@@ -17,8 +18,8 @@ export class HistoryService {
         this.store.set(sessionId, 
             [
                 ...existingHistory,
-                {role: "user", content: userMessage},
-                {role: "assistant", content: assistantMessage}
+                {role: ROLES.USER, content: userMessage},
+                {role: ROLES.ASSISTANT, content: assistantMessage}
             ]
         )
     }   
