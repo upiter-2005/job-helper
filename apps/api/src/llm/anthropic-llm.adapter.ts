@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CompleteParams, LlmPortType } from "./llm.port.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { ConfigService } from "@nestjs/config";
-import { MAX_INPUT_TOKENS, MODEL, SYSTEM } from "../consts/llm.consts.js";
+import { MAX_OUTPUT_TOKENS, MODEL, SYSTEM } from "../consts/llm.consts.js";
 
 @Injectable()
 export class AnthropicLlmAdapter implements LlmPortType {
@@ -22,7 +22,7 @@ export class AnthropicLlmAdapter implements LlmPortType {
 
         const message = await this.client.messages.create({
             model: MODEL,
-            max_tokens: MAX_INPUT_TOKENS,
+            max_tokens: MAX_OUTPUT_TOKENS,
             system: system || SYSTEM ,
             messages
         });
@@ -40,7 +40,7 @@ export class AnthropicLlmAdapter implements LlmPortType {
 
         const streamResponse = this.client.messages.stream({
             model: MODEL,
-            max_tokens: MAX_INPUT_TOKENS,
+            max_tokens: MAX_OUTPUT_TOKENS,
             system: system || SYSTEM ,
             messages
         });
