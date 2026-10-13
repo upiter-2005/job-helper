@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { CompleteParams, LlmPortType } from "./llm.port.js";
 import Anthropic from "@anthropic-ai/sdk";
 import { ConfigService } from "@nestjs/config";
@@ -6,6 +6,8 @@ import { SYSTEM } from "../consts/llm.consts.js";
 
 @Injectable()
 export class AnthropicLlmAdapter implements LlmPortType {
+
+    private readonly logger = new Logger(AnthropicLlmAdapter.name);
 
     constructor (private config: ConfigService){
         this.client = new Anthropic({
@@ -47,12 +49,18 @@ export class AnthropicLlmAdapter implements LlmPortType {
         if(signal?.aborted) onAbort();
         signal?.addEventListener('abort', onAbort, {once: true});
 
+        
         try {
             for await (const chunk of streamResponse) {
                 if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
                     onText(chunk.delta.text);
                 }
             }
+            const final = await streamResponse.finalMessage();
+            const {input_tokens, output_tokens}= final.usage;
+            this.logger.log(`usage: in=${input_tokens} out=${output_tokens}`);
+            
+            return {inputTokens: input_tokens, outputTokens: output_tokens}
         } finally {
             signal?.removeEventListener('abort', onAbort);
         }

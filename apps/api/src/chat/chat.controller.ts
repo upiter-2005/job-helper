@@ -1,10 +1,12 @@
-import { Body, Controller, Post, Res } from "@nestjs/common";
+import { Body, Controller, Logger, Post, Res } from "@nestjs/common";
 import type {Response} from 'express';
 import { ChatService } from "./chat.service.js";
 import { SendMessageDto } from "./chat.dto.js";
 
 @Controller('chat')
 export class ChatController {
+    private readonly logger = new Logger(ChatController.name);
+
     constructor(private readonly chatService: ChatService){};
 
     @Post('')
@@ -29,8 +31,10 @@ export class ChatController {
                 abort.signal,
             );
             res.write(`event: done\ndata:  ${JSON.stringify({ sessionId: id })}\n\n`);
+            this.logger.log(`sessionId returned ${id}`);
         } catch (err) {
             if (!abort.signal.aborted) {
+                this.logger.error(err);
                 res.write(`event: error\ndata: ${JSON.stringify({ message: 'Generation failed' })}\n\n`);
             }
         } finally {

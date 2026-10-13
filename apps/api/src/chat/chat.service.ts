@@ -18,7 +18,7 @@ export class ChatService {
     const messages: llmPort.Message[] = [...history, {role: 'user', content: prompt}]
     let buffer = '';
 
-    await this.llm.stream( {messages}, (text) => { buffer += text; onText(text);} , signal);
+    const {inputTokens, outputTokens} = await this.llm.stream( {messages}, (text) => { buffer += text; onText(text);} , signal);
     this.historyService.setHistory( id, prompt, buffer );
     
     return id;

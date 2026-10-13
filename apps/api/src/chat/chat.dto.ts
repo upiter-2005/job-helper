@@ -7,6 +7,6 @@ export class SendMessageDto {
 
     @IsString()
     @IsNotEmpty()
-    @MaxLength(2000)
+    @MaxLength(4000)
     prompt: string;
 }

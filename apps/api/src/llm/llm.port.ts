@@ -18,5 +18,5 @@ export interface LlmPortType {
         params: CompleteParams,
         onText: (text: string) => void,
         signal?: AbortSignal,
-    ): Promise<void>;
+    ): Promise<{inputTokens: number, outputTokens: number}>;
 }
