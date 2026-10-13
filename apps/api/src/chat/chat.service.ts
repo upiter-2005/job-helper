@@ -11,13 +11,6 @@ export class ChatService {
     private historyService:HistoryService
   ) {}
 
-  async sendMessage (prompt: string, sessionId?: string) {
-
-    if(sessionId){ console.log(sessionId, prompt) }
-
-    return this.llm.complete({ messages: []});
-  }
-
   async streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
     const {sessionId, prompt} = params;
     const id = sessionId || randomUUID();

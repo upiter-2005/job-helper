@@ -7,15 +7,6 @@ import { SendMessageDto } from "./chat.dto.js";
 export class ChatController {
     constructor(private readonly chatService: ChatService){};
 
-    @Post('complete')
-    async sendMessage(@Body() payload: SendMessageDto): Promise<string>{
-
-        const {sessionId, prompt} = payload;
-        const response = await this.chatService.sendMessage(prompt, sessionId);
-
-        return response;
-    }
-
     @Post('')
     async stream(@Body() params: SendMessageDto, @Res() res: Response) {
 
