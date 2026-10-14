@@ -10,19 +10,14 @@ export class ConversationRepository {
     private readonly repository: Repository<ConversationEntity>,
   ) {}
 
-  async findByParam() {
-    
+
+  async findOneById(id: string): Promise<ConversationEntity | null>{
+    return this.repository.findOneBy({id})
   }
 
-  async findById(){
-
+  async createAndSave(id: string):Promise<ConversationEntity> {
+    const conversation = this.repository.create({id});
+    return this.repository.save(conversation);
   }
 
-  async create() {
-    
-  }
-
-  async save() {
-  
-  }
 }

@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import * as llmPort from "../llm/llm.port.js";
-import { ROLES } from "../consts/llm.consts.js";
 import { MessageRepository } from "./message.repository.js";
 import { ConversationRepository } from "./conversation.repository.js";
 
@@ -11,37 +10,33 @@ export class HistoryService {
         private conversationRepository: ConversationRepository
     ) {}
 
-    private readonly store = new Map<string, {messages:llmPort.Message[], contextSize: number}>()
-
 
     async getHistory(sessionId: string): Promise<llmPort.Message[]>{
         const response =  await this.messageRepository.findByConversation(sessionId);
-        const messages  = response.map(el => ({ role: el.role , content: el.content}) );
+        const messages = response.map(el => ({ role: el.role , content: el.content}) );
+
         return messages;
-        
-        //return this.store.get(sessionId)?.messages ?? [];
     }
 
     async setHistory(sessionId:string, userMessage: string, assistantMessage: string, inputTokens: number, outputTokens: number): Promise<void>{
+        
+        const existConversation = await this.conversationRepository.findOneById(sessionId);
 
-        const contextSize = inputTokens + outputTokens;
-        const existingHistory = await this.getHistory(sessionId);
+        if(!existConversation){
+            await this.conversationRepository.createAndSave(sessionId);
+        }
 
-        this.store.set(sessionId, 
-            {
-                messages: [
-                    ...existingHistory,
-                    {role: ROLES.USER, content: userMessage},
-                    {role: ROLES.ASSISTANT, content: assistantMessage}
-                ],
-                contextSize
-            }
-            
-        )
+        const userContent = this.messageRepository.createUserMessage(sessionId, userMessage);
+        const assistantContent = this.messageRepository.createAssistantMessage(sessionId, assistantMessage, inputTokens, outputTokens);
+
+        await this.messageRepository.savePairMessages(userContent, assistantContent);
+       
     }  
     
-    getContextSize (sessionId: string): number {
-        return this.store.get(sessionId)?.contextSize ?? 0;
+    async getContextSize (sessionId: string): Promise<number> {
+        const [message] = await this.messageRepository.findLastMessage(sessionId);
+        const size =( message?.outputTokens || 0 )+ (message?.inputTokens || 0)
+        return size;
     }
 
 }

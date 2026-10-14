@@ -19,14 +19,14 @@ export class ChatService {
     const {sessionId, prompt} = params;
     const id = sessionId || randomUUID();
     const history = await this.historyService.getHistory(id);
-    const contextSize = this.historyService.getContextSize(id);
+    const contextSize = await this.historyService.getContextSize(id);
 
     if(contextSize > CONTEXT_CAPACITY){this.logger.warn(`Session ${id}: context ${contextSize}/${CONTEXT_CAPACITY}`)}
 
-    const messages: llmPort.Message[] = [...history, {role: ROLES.USER, content: prompt}]
+    const messages = [...history, {role: ROLES.USER, content: prompt}]
     let buffer = '';
     const {inputTokens, outputTokens} = await this.llm.stream( {messages}, (text) => { buffer += text; onText(text);} , signal);
-    this.historyService.setHistory( id, prompt, buffer, inputTokens, outputTokens);
+    await this.historyService.setHistory( id, prompt, buffer, inputTokens, outputTokens);
     
     return id;
   }
