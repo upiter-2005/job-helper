@@ -18,7 +18,7 @@ export class ChatService {
   async streamAnswer(params: StreamParams, onText: (text: string) => void, signal?: AbortSignal) {
     const {sessionId, prompt} = params;
     const id = sessionId || randomUUID();
-    const history = this.historyService.getHistory(id);
+    const history = await this.historyService.getHistory(id);
     const contextSize = this.historyService.getContextSize(id);
 
     if(contextSize > CONTEXT_CAPACITY){this.logger.warn(`Session ${id}: context ${contextSize}/${CONTEXT_CAPACITY}`)}

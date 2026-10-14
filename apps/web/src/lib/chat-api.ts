@@ -11,20 +11,71 @@ export type StreamChatParams = {
   signal?: AbortSignal;
 };
 
-/**
- * TODO (учебная часть этапа 2, пишешь сам):
- * POST `${API_URL}/chat` с телом { prompt, sessionId } и чтение SSE-потока.
- *
- * Что нужно сделать:
- * 1. fetch с method POST, заголовком Content-Type: application/json и signal.
- * 2. Прочитать response.body через ReadableStream (getReader + TextDecoder).
- * 3. Разобрать SSE-кадры (они разделены пустой строкой):
- *      data: {"text":"..."}              -> onText(text)
- *      event: done / data: {"sessionId"} -> onDone(sessionId)
- *      event: error                      -> бросить Error
- * 4. Помни, что один chunk из reader может содержать часть кадра или сразу несколько.
- */
+/** Разбирает один SSE-кадр на имя события и данные. */
+function parseFrame(frame: string): { event: string; data: string } {
+  let event = "message"; // по стандарту SSE событие без `event:` называется message
+  const dataLines: string[] = [];
+
+  for (const line of frame.split("\n")) {
+    if (line.startsWith("event:")) {
+      event = line.slice("event:".length).trim();
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice("data:".length).trim());
+    }
+  }
+
+  return { event, data: dataLines.join("\n") };
+}
+
 export async function streamChat(params: StreamChatParams): Promise<void> {
-  void params;
-  throw new Error("streamChat is not implemented yet");
+  const { prompt, sessionId, onText, onDone, signal } = params;
+
+  const response = await fetch(`${API_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, sessionId }),
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Request failed with status ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      // stream: true — если многобайтный символ (кириллица) разрезан между чанками,
+      // декодер подождёт продолжения, а не выдаст «�».
+      buffer += decoder.decode(value, { stream: true });
+
+      // Кадры разделены пустой строкой. Обрабатываем только законченные,
+      // недописанный хвост остаётся в buffer до следующего read().
+      let separatorIndex: number;
+      while ((separatorIndex = buffer.indexOf("\n\n")) !== -1) {
+        const frame = buffer.slice(0, separatorIndex);
+        buffer = buffer.slice(separatorIndex + 2);
+
+        const { event, data } = parseFrame(frame);
+        if (!data) continue;
+        const payload = JSON.parse(data);
+
+        if (event === "done") {
+          onDone(payload.sessionId);
+        } else if (event === "error") {
+          throw new Error(payload.message);
+        } else {
+          onText(payload.text);
+        }
+      }
+    }
+  } finally {
+    // Освободить соединение, если вышли по ошибке или обрыву.
+    reader.cancel().catch(() => {});
+  }
 }
