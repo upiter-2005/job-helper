@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ChatModule } from "../chat/chat.module.js";
 import { LlmModule } from "../llm/llm.module.js";
+import { ApplicationsModule } from "../applications/applications.module.js";
 import { AppController } from "./app.controller.js";
 import { AppService } from "./app.service.js";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -21,8 +22,9 @@ import { TypeOrmModule } from "@nestjs/typeorm";
         synchronize: config.get("NODE_ENV") !== "production",
       }),
     }),
-    ChatModule, 
-    LlmModule
+    ChatModule,
+    LlmModule,
+    ApplicationsModule
   ],
   controllers: [AppController],
   providers: [AppService]
